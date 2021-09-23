@@ -8,7 +8,7 @@ def raw2horiDist(distanceList, rawDistList, srvo_ang, angleList):
 
 #height of obstacles by angle
 
-def raw2height(heightList, rawDistList, srvo_ang):
+def raw2height(heightList, rawDistList, srvo_ang, LiDAR_height):
 	  for i in range (0, len(rawDistList)):
-	   	heightList[i] = rawDistList[i]*math.sin(math.radians(srvo_ang))
+	   	heightList[i] = LiDAR_height - rawDistList[i]*math.sin(math.radians(srvo_ang))
     return heightList
