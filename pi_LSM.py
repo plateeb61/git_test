@@ -1,33 +1,31 @@
 
 import numpy as np
-import math
 
 # Least Square Method 
 # inliers들로 구성된 기준식 하나 구하기 (=a, b, c 구하기)
-# inliersList는 RANSAC이 return한 maxInliers 
-# inliersList = [angle, distance] -> [x, distance (y)]로 바꿔줄 것임
+# inliersList는 RANSAC이 return한 maxInliers = [x, distance (y)]
 
 def LSM(inliersList, param): 
     J=np.empty((0,3), float) # Jacobian matrix (mx3)
     F=np.empty((0,1), float) # F matrix (mx1)
     P=np.empty((3,1), float) # P matrix (3x1)
-    X=np.array(param).reshape((3,1)) # X=[a, b, c] # X의 초기값을 param 값으로 설정
+    X=param.reshape((3,1)) # X=[a, b, c] # X의 초기값을 param 값으로 설정 # RANSAC에서 param을 np.array 형태로 받아옴
 
-    while 1:
+    while True:
 
         # 현재의 X 추정값 (a,b,c 추정값)에 대해 J, F를 계산함
         for i in inliersList:
-            x=param[0]*math.cos(i[0]) # angle을 x value로 변환 of i번째 inliersList
+            x=i[0] # x value로 변환 of i번째 inliersList
             y=i[1] # y value of i번째 inliersList
             a=X[0,0]
             b=X[1,0]
             c=X[2,0]
 
-            Ja=(a**2 - b*x)/(a**2*math.sqrt(1 - x**2/a**2)) # f를 a로 편미분
-            Jb=-math.acos(x/a)         
+            Ja=(a**2 - b*x)/(a**2*np.sqrt(1 - x**2/a**2)) # f를 a로 편미분
+            Jb=-np.acos(x/a)         
             J = np.append(J, np.array([[Ja, Jb, 1]]), axis=0)
 
-            fi=a*math.sin(math.acos(x/a))-b*math.acos(x/a)+c-y
+            fi=a*np.sin(np.acos(x/a))-b*np.acos(x/a)+c-y
             F = np.append(F, np.array([[fi]]), axis=0)
         
         # P 계산, X 업데이트
@@ -40,6 +38,6 @@ def LSM(inliersList, param):
         if all(abs(X-bX)<0.5):  
             break
 
-    return X.tolist() # np.array X를 list로 바꿔 return
+    return X # np.array X를 return
 
 
