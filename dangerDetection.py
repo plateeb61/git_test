@@ -9,7 +9,7 @@ class dangerDetection:
     def getBase(radius:float):
         main = Main.getInstance()
         return radius, (1 if main.goLeft else -1) * 9*main.velocity*main.onewayTime/(5*np.pi), (-7 if main.goLeft else 2)*main.velocity*main.onewayTime/5
-
+    
     def RANSAC(XPOS, H): #XH 평면을 바라보고
         #XPOS : 라이다에서 측정 포인트까지의 x축 방향 distance
         #YPOS :
@@ -75,4 +75,51 @@ class dangerDetection:
         X=np.linalg.inv(A.T@A)@A.T@B # X 업데이트
 
         return X # np.array X = [a, b]를 return
+   
+    # 좌우 경사 판단 Method # roll 각도 구하기 # [x, z]
+    def lrSlope(maxInliers, XPOS, H): # inliers = inliers에 해당하는 인덱스 리스트
+
+        p1=[XPOS[inliers[0]], H[inliers[0]]] # 첫번째 inlier의 [x,z] 값 
+        p2=[XPOS[inliers[-1]], H[inliers[-1]]] # 마지막 inlier의 [x,z] 값 
+    
+        rol_ang = np.arctan((p2[1]-p1[1])/(p2[0]-p1[0])) # [rad] # 항상 p2[0] != p1[0] 
+        return rol_ang
+    
+    # 상하 경사 판단 Method # pitch 각도 구하기  # [y, z] 
+    def udSlope(maxInliers, YPOS, H):
+
+        p1=[YPOS[inliers[0]], H[inliers[0]]]
+        p2=[YPOS[inliers[-1]], H[inliers[-1]]]
+
+        pit_ang = np.arctan((p2[1]-p1[1])/(p2[0]-p1[0]))
+        return pit_ang
+    
+    # 예상되는 roll, pitch를 계산해서 상하, 좌우 picto 번호와 led 번호를 반환
+    def estiSlope(pit_ang, rol_ang):
+        carRol, carPit = getRollPitch() # car roll, pitch 받아오기
+        
+        if pit_ang*carPit > 0:
+            estPit=pit_ang-carPit # 차의 현재 각도와 라이다의 예상 각도의 부호가 같을 때 (내리막 > 내리막, 오르막 > 오르막)
+        else: estPit=pit_ang+carPit # 각도가 0이거나 두 각도의 부호가 다를 때 (내리막 > 오르막, 오르막 > 내리막)
+
+        if rol_ang*carRol > 0:
+            estRol=rol_ang-carRol 
+        else: estRol=rol_ang+carRol
+
+        pitTh = 2*np.pi/9 # pitch 위험 기준 각도 40[deg] = 2pi/9[rad]
+        rolTh = np.pi/6 # roll 위험 기준 각도 30[deg] = pi/6[rad]
+
+        if estPit > pitTh:
+            pictoPit = "1000"
+            if POS == 2: ledPit="001"
+            else: ledPit="110"
+
+        if estRol > rolTh:
+            pictoRol = "0100"
+            if estRol > 0: ledRol="010"
+            elif estRol < 0: ledRol="100"
+            else: ledRol="000"
+        return pictoPit, pictoRol, ledPit, ledRol
+        
+    
 
