@@ -4,6 +4,9 @@ import Main
 class dangerDetection:
     MIN_ANGLE = 2*np.pi/9
     MAX_ANGLE = 7*np.pi/9
+    
+    minpwid = 2 # outliers 인덱스가 최소 몇개 이상 연속돼야하는지 기준값
+    zth = 2 # 장애물끼리의 높이 차 허용 기준값
 
     # y expression
     def getBase(radius:float):
@@ -120,6 +123,59 @@ class dangerDetection:
             elif estRol < 0: ledRol="100"
             else: ledRol="000"
         return pictoPit, pictoRol, ledPit, ledRol
+
+    def Obstacle(finOutliers, XPOS, H, minpwid, zth):
         
+        # minpwid개 이상 연속으로 모인 점들을 리스트에 저장
+        packet = []
+        tmp = []
+
+        v = finOutliers.pop(0)
+        tmp.append(v)
+
+        while(len(finOutliers)>0):
+            vv = finOutliers.pop(0)
+            if v+1 == vv:
+                tmp.append(vv)
+                v = vv
+            else:
+                if len(tmp) > minpwid:
+                    packet.append(tmp)
+                tmp = []
+	            tmp.append(vv)
+	            v = vv
+        
+        if len(tmp) > minpwid:
+            packet.append(tmp)
+            
+        finobs=[]
+        ledpos=[]
+        pictopos=[]
+
+        # 1개의 장애물을 구성하는 인덱스들끼리 z값 비교하여 큰 차이 없으면 취함
+        for i in range(len(packet)):
+            tmpack = np.array(packet[i])
+            tmph=[]
+            tmpx=[]
+            for j in tmpack:
+                tmph.append(H[j])
+            if all((np.array(tmph)-tmph[0])<zth): 
+                finobs.append(packet[i])
+
+                # 오목인지 볼록인지 판단
+                if all(np.array(tmph)>0): pictopos.append("0001")
+                elif all(np.array(tmph)<0): pictopos.append("0010")
+                else: pitcopos.append("0000")
+
+                # 장애물 좌/우/전방 위치 판단
+                if POS == 2:
+                    ledpos.append("001")
+                else:
+                    for k in tmpack:
+                        tmpx.append(XPOS[k])
+                    if all(np.array(tmpx)>0): ledpos.append("010")
+                    elif all(np.array(tmpx)<0): ledpos.append("100")
+                    else: ledpos.append("110")
+        return pictopos, ledpos
     
 
