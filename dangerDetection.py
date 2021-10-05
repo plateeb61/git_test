@@ -124,8 +124,7 @@ class dangerDetection:
             else: ledRol="000"
         return pictoPit, pictoRol, ledPit, ledRol
 
-    def Obstacle(finOutliers, XPOS, H, minpwid, zth):
-        
+    def Obstacle(finOutliers, XPOS, H, minpwid, zth):       
         # minpwid개 이상 연속으로 모인 점들을 리스트에 저장
         packet = []
         tmp = []
@@ -176,6 +175,46 @@ class dangerDetection:
                     if all(np.array(tmpx)>0): ledpos.append("010")
                     elif all(np.array(tmpx)<0): ledpos.append("100")
                     else: ledpos.append("110")
-        return pictopos, ledpos
-    
+        
+	obspicto=[0,0,0,0]
+	obsled=[0,0,0]
+
+	for i in range(len(pictopos)):
+   		for j in range(4):
+        		tmppicto = pictopos[i]
+        		obspicto[j] += int(tmppicto[j])
+        		if obspicto[j]!=0: obspicto[j]=1
+
+	for i in range(len(ledpos)):
+    		for j in range(3):
+        		tmpled = ledpos[i]
+        		obsled[j] += int(tmpled[j])
+        		if obsled[i]!=0: obsled[i]=1
+				
+	return obspicto, obsled
+
+    #roll, pitch, obstacle 각각의 picto, led 결합하여 아두이노로 넘겨줄 최종 picto, led 구하기
+    def finalPictoLed(pictoPit, pictoRol, obspicto, ledPit, ledRol, obsled):
+	finpicto=[0,0,0,0]
+	finled=[0,0,0]
+	repicto="" #아두이노로 return할 picto 위치 ex. "0001"
+	reled="" #아두이노로 return할 led 위치 ex. "100"
+	
+	for i in range(4):
+		finpicto[i] = int(pictoPit[i])+int(pictoRol[i])+obspicto[i]
+    		if finpicto[i]!=0: finpicto[i]=1
+    		repicto+=str(finpicto[i])
+	#print(finpicto)
+	#print(repicto)
+
+	for i in range(3):
+    		finled[i] = int(ledPit[i])+int(ledRol[i])+obsled[i]
+    		if finled[i]!=0: finled[i]=1
+    		reled+=str(finled[i])
+	#print(finled)
+	#print(reled)
+	return repicto, reled
+	
+
+
 
