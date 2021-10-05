@@ -56,3 +56,16 @@ class dangerDetection:
                 param = [a, b]
 
         return maxInliers, finOutliers, param
+    
+    def LSM(inliersList): 
+        A=np.empty((0,2), float) # A = [x, 1] (mx2)
+        B=np.empty((0,1), float) # B = [z] (mx1)
+
+        # A, B 행렬 만들기
+        for i in inliersList:
+            A = np.append(A, np.array([[i[0], 1]]), axis=0)
+            B = np.append(B, np.array([i[1]]))
+
+        X=np.linalg.inv(A.T@A)@A.T@B # X 업데이트
+        
+        return X # np.array X = [a, b]를 return
